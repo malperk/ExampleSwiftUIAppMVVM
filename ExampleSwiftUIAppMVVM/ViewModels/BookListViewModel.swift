@@ -1,7 +1,7 @@
-import Foundation
+import Combine
 
 class BookListViewModel: ObservableObject {
-    @Published var state: Loadable<[Book]> = .idle
+    @Published var state: ViewState<[Book]> = .idle
     @Published var searchText: String = ""
 
     private let repository: BookRepositoryProtocol
@@ -15,9 +15,9 @@ class BookListViewModel: ObservableObject {
         state = .loading
         do {
             let books = try await repository.fetchBooks()
-            state = .loaded(books)
+            state = books.isEmpty ? .empty : .loaded(data: books)
         } catch {
-            state = .failed("Failed to load books. Please try again.")
+            state = .failed(error: "Failed to load books.")
         }
     }
 
@@ -26,7 +26,7 @@ class BookListViewModel: ObservableObject {
               let index = books.firstIndex(of: book) else { return }
 
         books[index].isFavorite.toggle()
-        state = .loaded(books)
+        state = .loaded(data: books)
     }
 
     var filteredBooks: [Book] {

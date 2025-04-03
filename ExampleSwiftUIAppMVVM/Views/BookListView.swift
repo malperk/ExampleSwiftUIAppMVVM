@@ -21,18 +21,17 @@ struct BookListView: View {
         switch viewModel.state {
         case .idle, .loading:
             ProgressView("Loading...")
-                .transition(.opacity)
 
-        case .failed(let message):
+        case .empty:
+            Text("No books available.")
+
+        case .failed(let error):
             VStack {
-                Text(message)
-                    .foregroundStyle(.red)
+                Text(error).foregroundStyle(.red)
                 Button("Retry") {
                     Task { await viewModel.loadBooks() }
                 }
-                .padding()
             }
-            .transition(.opacity)
 
         case .loaded:
             List(viewModel.filteredBooks) { book in
@@ -42,7 +41,6 @@ struct BookListView: View {
                     BookRowView(book: book)
                 }
             }
-            .animation(.default, value: viewModel.filteredBooks)
         }
     }
 }
