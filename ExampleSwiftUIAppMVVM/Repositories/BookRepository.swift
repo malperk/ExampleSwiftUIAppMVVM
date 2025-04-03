@@ -1,11 +1,8 @@
 import Foundation
 
-protocol BookRepositoryProtocol {
-    func fetchBooksPage(page: Int) async throws -> [Book]
-}
-
 struct BookRepository: BookRepositoryProtocol {
     func fetchBooksPage(page: Int) async throws -> [Book] {
+        print("Alper")
         try await Task.sleep(nanoseconds: 500_000_000) // faster simulate
 
         if Bool.random() { // simulate error

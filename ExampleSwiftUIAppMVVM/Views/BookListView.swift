@@ -9,11 +9,6 @@ struct BookListView: View {
             content
                 .navigationTitle("Books")
                 .searchable(text: $viewModel.searchText)
-                .task(id: viewModel.state) {
-                    if case .idle = viewModel.state {
-                        await viewModel.loadBooks(reset: true)
-                    }
-                }
                 .refreshable {
                     await viewModel.loadBooks(reset: true)
                 }
@@ -51,11 +46,11 @@ struct BookListView: View {
                     } label: {
                         BookRowView(book: book)
                     }
-                    .onAppear {
-                        if book == viewModel.filteredBooks.last {
-                            Task { await viewModel.loadBooks() }
-                        }
-                    }
+//                    .onAppear {
+//                        if book == viewModel.filteredBooks.last {
+//                            Task { await viewModel.loadBooks() }
+//                        }
+//                    }
                 }
             }
         }

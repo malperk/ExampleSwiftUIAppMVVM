@@ -13,6 +13,7 @@ class BookListViewModel: ObservableObject {
 
     init(repository: BookRepositoryProtocol = BookRepository()) {
         self.repository = repository
+        Task { await loadBooks(reset: true) }
     }
 
     @MainActor
