@@ -19,6 +19,7 @@ struct BookDetailView: View {
                 Label("Favorite", systemImage: book.isFavorite ? "star.fill" : "star")
                     .padding()
             }
+            .accessibilityLabel(book.isFavorite ? "Unmark as favorite" : "Mark as favorite")
 
             Spacer()
         }

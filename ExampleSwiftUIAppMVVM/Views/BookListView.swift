@@ -5,44 +5,44 @@ struct BookListView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if viewModel.isLoading {
-                    ProgressView("Loading...")
-                        .transition(.opacity)
-                } else if let error = viewModel.errorMessage {
-                    Text(error)
-                        .foregroundStyle(.red)
-                        .transition(.opacity)
-                } else {
-                    List(viewModel.filteredBooks) { book in
-                        NavigationLink {
-                            BookDetailView(book: book, viewModel: viewModel)
-                        } label: {
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(book.title)
-                                        .font(.headline)
-                                    Text(book.author)
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                if book.isFavorite {
-                                    Image(systemName: "star.fill")
-                                        .foregroundStyle(.yellow)
-                                        .transition(.scale)
-                                }
-                            }
-                        }
+            content
+                .navigationTitle("Books")
+                .searchable(text: $viewModel.searchText)
+                .task(id: viewModel.state) {
+                    if case .idle = viewModel.state {
+                        await viewModel.loadBooks()
                     }
-                    .animation(.spring(), value: viewModel.filteredBooks)
+                }
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch viewModel.state {
+        case .idle, .loading:
+            ProgressView("Loading...")
+                .transition(.opacity)
+
+        case .failed(let message):
+            VStack {
+                Text(message)
+                    .foregroundStyle(.red)
+                Button("Retry") {
+                    Task { await viewModel.loadBooks() }
+                }
+                .padding()
+            }
+            .transition(.opacity)
+
+        case .loaded:
+            List(viewModel.filteredBooks) { book in
+                NavigationLink {
+                    BookDetailView(book: book, viewModel: viewModel)
+                } label: {
+                    BookRowView(book: book)
                 }
             }
-            .navigationTitle("Books")
-            .searchable(text: $viewModel.searchText)
-            .task {
-                await viewModel.loadBooks()
-            }
+            .animation(.default, value: viewModel.filteredBooks)
         }
     }
 }

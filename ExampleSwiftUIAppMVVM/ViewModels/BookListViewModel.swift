@@ -1,10 +1,8 @@
 import Foundation
 
 class BookListViewModel: ObservableObject {
-    @Published var books: [Book] = []
+    @Published var state: Loadable<[Book]> = .idle
     @Published var searchText: String = ""
-    @Published var errorMessage: String? = nil
-    @Published var isLoading: Bool = false
 
     private let repository: BookRepositoryProtocol
 
@@ -14,23 +12,26 @@ class BookListViewModel: ObservableObject {
 
     @MainActor
     func loadBooks() async {
-        isLoading = true
-        defer { isLoading = false }
-        
+        state = .loading
         do {
-            books = try await repository.fetchBooks()
+            let books = try await repository.fetchBooks()
+            state = .loaded(books)
         } catch {
-            errorMessage = "Failed to load books."
+            state = .failed("Failed to load books. Please try again.")
         }
     }
 
-    var filteredBooks: [Book] {
-        guard !searchText.isEmpty else { return books }
-        return books.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
+    func toggleFavorite(book: Book) {
+        guard case .loaded(var books) = state,
+              let index = books.firstIndex(of: book) else { return }
+
+        books[index].isFavorite.toggle()
+        state = .loaded(books)
     }
 
-    func toggleFavorite(book: Book) {
-        guard let index = books.firstIndex(where: { $0.id == book.id }) else { return }
-        books[index].isFavorite.toggle()
+    var filteredBooks: [Book] {
+        guard case .loaded(let books) = state else { return [] }
+        guard !searchText.isEmpty else { return books }
+        return books.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
     }
 }
