@@ -1,10 +1,11 @@
+import Combine
 import SwiftUI
 
 struct BookListView: View {
     @StateObject private var viewModel = BookListViewModel()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $viewModel.path) {
             content
                 .navigationTitle("Books")
                 .searchable(text: $viewModel.searchText)
@@ -15,6 +16,12 @@ struct BookListView: View {
                 }
                 .refreshable {
                     await viewModel.loadBooks(reset: true)
+                }
+                .navigationDestination(for: BookRoute.self) { route in
+                    switch route {
+                    case .detail(let book):
+                        BookDetailCoordinator(book: book)
+                    }
                 }
         }
     }
@@ -34,20 +41,19 @@ struct BookListView: View {
                 Button("Retry") {
                     Task { await viewModel.loadBooks(reset: true) }
                 }
-                .padding()
             }
 
         case .loaded:
             List {
                 ForEach(viewModel.filteredBooks) { book in
-                    NavigationLink {
-                        BookDetailCoordinator(book: book)
+                    Button {
+                        viewModel.navigateToDetail(book: book)
                     } label: {
                         BookRowView(book: book)
                     }
                     .onAppear {
                         if book == viewModel.filteredBooks.last {
-                            Task { await viewModel.loadBooks() } // Infinite Scroll
+                            Task { await viewModel.loadBooks() }
                         }
                     }
                 }

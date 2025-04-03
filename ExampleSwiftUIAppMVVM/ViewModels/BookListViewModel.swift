@@ -1,9 +1,11 @@
 import Combine
+import SwiftUI
 
 class BookListViewModel: ObservableObject {
     @Published var state: ViewState<[Book]> = .idle
     @Published var searchText: String = ""
-
+    @Published var path: NavigationPath = NavigationPath()
+    
     private let repository: BookRepositoryProtocol
     private var currentPage = 1
     private var hasMore = true
@@ -16,7 +18,7 @@ class BookListViewModel: ObservableObject {
     @MainActor
     func loadBooks(reset: Bool = false) async {
         if isLoadingMore { return }
-        
+
         if reset {
             currentPage = 1
             hasMore = true
@@ -30,7 +32,7 @@ class BookListViewModel: ObservableObject {
         do {
             let newBooks = try await repository.fetchBooksPage(page: currentPage)
             currentPage += 1
-            hasMore = newBooks.count >= 3 // example rule: if less than 3 items, no more pages
+            hasMore = newBooks.count >= 3
 
             switch state {
             case .loaded(let existing):
@@ -40,7 +42,6 @@ class BookListViewModel: ObservableObject {
             }
         } catch {
             if case .loaded(let existing) = state, !existing.isEmpty {
-                // retain old data
                 state = .loaded(data: existing)
             } else {
                 state = .failed(error: "Failed to load books.")
@@ -56,6 +57,10 @@ class BookListViewModel: ObservableObject {
 
         books[index].isFavorite.toggle()
         state = .loaded(data: books)
+    }
+    
+    func navigateToDetail(book: Book) {
+        path.append(BookRoute.detail(book))
     }
 
     var filteredBooks: [Book] {
