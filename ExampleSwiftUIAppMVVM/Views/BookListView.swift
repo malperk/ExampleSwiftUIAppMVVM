@@ -10,8 +10,11 @@ struct BookListView: View {
                 .searchable(text: $viewModel.searchText)
                 .task(id: viewModel.state) {
                     if case .idle = viewModel.state {
-                        await viewModel.loadBooks()
+                        await viewModel.loadBooks(reset: true)
                     }
+                }
+                .refreshable {
+                    await viewModel.loadBooks(reset: true)
                 }
         }
     }
@@ -23,22 +26,30 @@ struct BookListView: View {
             ProgressView("Loading...")
 
         case .empty:
-            Text("No books available.")
+            Text("No books found.")
 
         case .failed(let error):
             VStack {
                 Text(error).foregroundStyle(.red)
                 Button("Retry") {
-                    Task { await viewModel.loadBooks() }
+                    Task { await viewModel.loadBooks(reset: true) }
                 }
+                .padding()
             }
 
         case .loaded:
-            List(viewModel.filteredBooks) { book in
-                NavigationLink {
-                    BookDetailView(book: book, viewModel: viewModel)
-                } label: {
-                    BookRowView(book: book)
+            List {
+                ForEach(viewModel.filteredBooks) { book in
+                    NavigationLink {
+                        BookDetailCoordinator(book: book)
+                    } label: {
+                        BookRowView(book: book)
+                    }
+                    .onAppear {
+                        if book == viewModel.filteredBooks.last {
+                            Task { await viewModel.loadBooks() } // Infinite Scroll
+                        }
+                    }
                 }
             }
         }

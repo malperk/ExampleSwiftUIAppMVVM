@@ -1,25 +1,23 @@
 import SwiftUI
 
 struct BookDetailView: View {
-    let book: Book
-    @ObservedObject var viewModel: BookListViewModel
+    @ObservedObject var viewModel: BookDetailViewModel
 
     var body: some View {
         VStack(spacing: 20) {
-            Text(book.title)
+            Text(viewModel.book.title)
                 .font(.largeTitle)
                 .bold()
 
-            Text("by \(book.author)")
+            Text("by \(viewModel.book.author)")
                 .font(.title2)
 
             Button {
-                viewModel.toggleFavorite(book: book)
+                viewModel.toggleFavorite()
             } label: {
-                Label("Favorite", systemImage: book.isFavorite ? "star.fill" : "star")
+                Label("Favorite", systemImage: viewModel.book.isFavorite ? "star.fill" : "star")
                     .padding()
             }
-            .accessibilityLabel(book.isFavorite ? "Unmark as favorite" : "Mark as favorite")
 
             Spacer()
         }
